@@ -79,7 +79,7 @@
       .map(
         (obra, index) => `
         <a class="film-card" href="museo.html" aria-label="${obra.alt}" data-gallery-card style="--gallery-index:${index}">
-          <img src="${obra.src}" alt="${obra.alt}" loading="lazy">
+          <img src="assets/img/Obras/Pintura-${obra.n}-thumb.webp" alt="${obra.alt}" loading="lazy">
           <span class="film-card__index" aria-hidden="true">${String(obra.n).padStart(2, "0")}</span>
           <span class="film-card__caption" aria-hidden="true">
             <span>Narra Muros</span>

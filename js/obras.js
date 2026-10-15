@@ -31,7 +31,7 @@
 
   const TOTAL = 18;
   const STEP = 360 / TOTAL;                 // grados entre obras
-  const EXT = [".JPG", ".jpg", ".png", ".jpeg", ".webp"];
+  const EXT = [".webp", ".JPG", ".jpg", ".png", ".jpeg"];
 
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const coarse = window.matchMedia("(pointer: coarse)").matches;

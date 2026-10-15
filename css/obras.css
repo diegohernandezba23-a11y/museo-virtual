@@ -92,7 +92,7 @@
   background:
     linear-gradient(180deg, #05060899 0%, #05060826 26%, #05060877 74%, #050608e0 100%),
     linear-gradient(90deg, #050608 0%, #05060899 16%, transparent 38%, transparent 62%, #05060899 84%, #050608 100%),
-    url("../assets/img/evento/obrasM.jpg") center / cover no-repeat,
+    url("../assets/img/evento/obrasM.webp") center / cover no-repeat,
     repeating-linear-gradient(0deg, #1c2126 0 15px, #12161a 15px 17px),
     repeating-linear-gradient(90deg, #191d22 0 64px, #0f1215 64px 67px),
     #0d1013;
