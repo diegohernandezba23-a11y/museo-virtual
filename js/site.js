@@ -42,14 +42,15 @@
         document.body.classList.remove("nav-open");
         return;
       }
-      const hashAt = url.indexOf("#");
-      if (hashAt > 0) {
-        const path = url.slice(0, hashAt).split("/").pop();
-        const current = (location.pathname.split("/").pop() || "home.html");
-        if (path === current) {
-          document.body.classList.remove("nav-open");
-          return;
-        }
+      const target = new URL(url, window.location.href);
+      if (
+        target.origin === window.location.origin &&
+        target.pathname === window.location.pathname &&
+        target.search === window.location.search &&
+        target.hash
+      ) {
+        document.body.classList.remove("nav-open");
+        return;
       }
       if (!url.includes(".html")) return;
       event.preventDefault();
