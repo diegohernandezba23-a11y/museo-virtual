@@ -84,6 +84,7 @@
     const card = document.createElement("button");
     card.type = "button";
     card.className = "art";
+    card.dataset.cursor = "Ver";
     card.setAttribute("aria-label", `Ver ${meta.titulo}, de ${meta.autor}`);
     card.innerHTML = `
       <span class="art__lift">
@@ -128,7 +129,7 @@
     let ch = cw * 1.34;
 
     // Banda de obras: más alta que antes, sin invadir el título ni el HUD.
-    const maxH = vh * (mobile ? (short ? 0.44 : 0.52) : (short ? 0.48 : 0.52));
+    const maxH = vh * (mobile ? (short ? 0.44 : 0.52) : (short ? 0.44 : 0.47));
     if (ch > maxH) { ch = maxH; cw = ch / 1.34; }
 
     const spread = mobile ? 0.84 : 0.9;
@@ -152,8 +153,12 @@
      3. Estado y render
      --------------------------------------------------------- */
 
-  let pos = 0;              // posición continua (en índices)
-  let targetPos = 0;
+  // ?obra=7 abre la sala con esa obra al frente (enlaces del home)
+  const requested = parseInt(new URLSearchParams(location.search).get("obra"), 10);
+  const startIndex = requested >= 1 && requested <= TOTAL ? requested - 1 : 0;
+
+  let pos = startIndex;     // posición continua (en índices)
+  let targetPos = startIndex;
   let centerIndex = -1;
   let dragging = false;
   let introRunning = false;
@@ -332,6 +337,15 @@
   window.addEventListener("keydown", (e) => {
     if (lightbox && !lightbox.hidden) {
       if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowLeft") stepLightbox(-1);
+      if (e.key === "ArrowRight") stepLightbox(1);
+      if (e.key === "Tab") {
+        // Foco atrapado dentro del visor
+        const items = [...lightbox.querySelectorAll("button")];
+        const first = items[0], last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
       return;
     }
     if (e.key === "ArrowLeft") prev();
@@ -409,14 +423,27 @@
      --------------------------------------------------------- */
 
   let lastFocus = null;
+  let lightIndex = 0;
 
-  function openLightbox(obra) {
-    if (!lightbox || !obra) return;
-    lastFocus = document.activeElement;
+  const fillLightbox = (obra) => {
     lightImg.src = obra.src;
     lightImg.alt = obra.titulo;
     lightTitle.textContent = obra.titulo;
     lightAuthor.textContent = obra.autor;
+  };
+
+  function stepLightbox(dir) {
+    lightIndex = wrapIndex(lightIndex + dir);
+    fillLightbox(obras[lightIndex]);
+    goTo(nearestTo(lightIndex));
+    if (G && !reduce) G.fromTo(lightImg, { opacity: 0, x: dir * 24 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" });
+  }
+
+  function openLightbox(obra) {
+    if (!lightbox || !obra) return;
+    lastFocus = document.activeElement;
+    lightIndex = obras.indexOf(obra);
+    fillLightbox(obra);
     lightbox.hidden = false;
     document.body.style.overflow = "hidden";
     pauseAuto();
@@ -436,6 +463,8 @@
   }
 
   document.querySelector("[data-lightbox-close]")?.addEventListener("click", closeLightbox);
+  document.querySelector("[data-lightbox-prev]")?.addEventListener("click", () => stepLightbox(-1));
+  document.querySelector("[data-lightbox-next]")?.addEventListener("click", () => stepLightbox(1));
   lightbox?.addEventListener("click", (e) => { if (e.target === lightbox) closeLightbox(); });
 
   /* ---------------------------------------------------------
@@ -514,7 +543,7 @@
   }
 
   if (G && !reduce) {
-    const spin = { v: -2.6 };
+    const spin = { v: startIndex - 2.6 };
     introRunning = true;
 
     const tl = G.timeline({ defaults: { ease: "power3.out" } });
@@ -528,13 +557,13 @@
         { z: 0, rotationX: 0, duration: 1.25, ease: "power3.out", clearProps: "transform" }, "-=0.95")
       .fromTo(".gallery__stage", { opacity: 0 }, { opacity: 1, duration: 0.7, ease: "power2.out" }, "<")
       .to(spin, {
-        v: 0,
+        v: startIndex,
         duration: 1.45,
         ease: "power3.out",
         onUpdate: () => { pos = spin.v; },
         onComplete: () => {
-          pos = 0;
-          targetPos = 0;
+          pos = startIndex;
+          targetPos = startIndex;
           introRunning = false;
           document.body.classList.add("is-live");
           startAuto();

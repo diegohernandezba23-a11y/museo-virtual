@@ -17,7 +17,6 @@ window.addEventListener('load', () => {
   const logoMain = document.querySelector('.logo-main');
   const logoImg = logoMain.querySelector('img');
   const stickers = gsap.utils.toArray('.sticker');
-  const dripsContainer = document.querySelector('.drips');
   const fadeOverlay = document.querySelector('.fade-overlay');
   const cinematicFlash = document.querySelector('.cinematic-flash');
   const audioEl = document.getElementById('spray-audio');
@@ -29,6 +28,7 @@ window.addEventListener('load', () => {
   const isMobile = window.innerWidth < 700 || coarse;
 
   const goHome = () => {
+    try { sessionStorage.setItem('nm-intro', '1'); } catch (e) {}
     window.location.href = 'home.html?from=museum';
   };
 
@@ -97,11 +97,13 @@ window.addEventListener('load', () => {
   const maxParticles = isMobile ? 64 : 170;
 
   function resizeCanvas() {
-    const rect = sceneEl.getBoundingClientRect();
-    canvas.width = Math.floor(rect.width * dpr);
-    canvas.height = Math.floor(rect.height * dpr);
-    canvas.style.width = `${rect.width}px`;
-    canvas.style.height = `${rect.height}px`;
+    // Medidas sin la escala de la cámara: el canvas vive dentro de la escena
+    const w = sceneEl.clientWidth;
+    const h = sceneEl.clientHeight;
+    canvas.width = Math.floor(w * dpr);
+    canvas.height = Math.floor(h * dpr);
+    canvas.style.width = `${w}px`;
+    canvas.style.height = `${h}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
@@ -240,40 +242,47 @@ window.addEventListener('load', () => {
     requestAnimationFrame(tickParticles);
 
     const sceneRect = sceneEl.getBoundingClientRect();
-    const originX = sceneRect.width * 0.62;
-    const originY = sceneRect.height * 0.42;
+    const SW = sceneEl.clientWidth;
+    const SH = sceneEl.clientHeight;
+    // Origen real de la lata (top/left en % según el tamaño de pantalla)
+    const originX = canEl.offsetLeft;
+    const originY = canEl.offsetTop;
     const toXY = (sx, sy) => ({ x: sx - originX, y: sy - originY });
+    const local = (el) => {
+      const r = el.getBoundingClientRect();
+      const s = sceneEl.getBoundingClientRect();
+      const k = s.width / SW || 1; // la cámara escala la escena
+      return { left: (r.left - s.left) / k, top: (r.top - s.top) / k, width: r.width / k, height: r.height / k };
+    };
 
-    const logoRect = logoMain.getBoundingClientRect();
-    const logoLeft = logoRect.left - sceneRect.left;
-    const logoTop = logoRect.top - sceneRect.top;
-    const logoW = logoRect.width;
-    const logoH = logoRect.height;
+    const logoBox = local(logoMain);
+    const logoLeft = logoBox.left;
+    const logoTop = logoBox.top;
+    const logoW = logoBox.width;
+    const logoH = logoBox.height;
     const holdRotate = isMobile ? -16 : -20;
     const offX = isMobile ? 18 : 26;
     const offY = isMobile ? -18 : -24;
-
     const onLogo = (lx, ly) => toXY(logoLeft + logoW * lx + offX, logoTop + logoH * ly + offY);
+    const setPaint = (el, pct) => el.style.setProperty('--paint', `${pct}%`);
 
     const drips = [];
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 6; i++) {
       const d = document.createElement('span');
       d.className = 'drip';
-      d.style.left = `${logoLeft + logoW * (0.18 + i * 0.22) + gsap.utils.random(-8, 8)}px`;
-      d.style.top = `${logoTop + logoH - 8}px`;
+      d.style.left = `${logoLeft + logoW * (0.12 + i * 0.15) + gsap.utils.random(-8, 8)}px`;
+      d.style.top = `${logoTop + logoH * gsap.utils.random(0.72, 0.9)}px`;
       d.style.height = '0px';
-      dripsContainer.appendChild(d);
+      d.style.background = i % 2 ? '#14e0c4' : '#ff2e88';
+      sceneEl.appendChild(d); // coordenadas de escena, igual que el logo
       drips.push(d);
     }
 
     const updateEmitter = () => {
-      const canRect = canEl.getBoundingClientRect();
-      const sRect = sceneEl.getBoundingClientRect();
+      const c = local(canEl);
       const rot = (gsap.getProperty(canEl, 'rotate') || holdRotate) * Math.PI / 180;
-      const cx = canRect.left - sRect.left + canRect.width * 0.42;
-      const cy = canRect.top - sRect.top + canRect.height * 0.1;
-      emitter.x = cx + Math.sin(rot) * 8;
-      emitter.y = cy + 8;
+      emitter.x = c.left + c.width * 0.42 + Math.sin(rot) * 8;
+      emitter.y = c.top + c.height * 0.1 + 8;
       emitter.angle = Math.PI * 0.58 + rot * 0.4;
       if (paintGlow) {
         paintGlow.style.left = `${emitter.x - paintGlow.offsetWidth / 2}px`;
@@ -284,186 +293,243 @@ window.addEventListener('load', () => {
     let wrist;
     const startWrist = () => {
       if (wrist) wrist.kill();
-      wrist = gsap.to(canBody, {
-        x: isMobile ? 2 : 3.5,
-        y: 2,
-        rotate: 2.2,
-        duration: 0.045,
-        repeat: -1,
-        yoyo: true,
-        ease: 'none',
-      });
+      wrist = gsap.to(canBody, { x: isMobile ? 2 : 3.5, y: 2, rotate: 2.2, duration: 0.045, repeat: -1, yoyo: true, ease: 'none' });
     };
     const stopWrist = () => {
       if (wrist) wrist.kill();
       gsap.to(canBody, { x: 0, y: 0, rotate: 0, duration: 0.12 });
     };
+    const sprayOn = () => {
+      isPainting = true;
+      startWrist();
+      updateEmitter();
+      gsap.to([sprayCone, paintGlow], { opacity: isMobile ? 0.6 : 0.85, duration: 0.15 });
+    };
+    const sprayOff = () => {
+      isPainting = false;
+      stopWrist();
+      gsap.to([sprayCone, paintGlow], { opacity: 0, duration: 0.2 });
+    };
 
-    const first = onLogo(0.06, 0.06);
-    gsap.set(canEl, {
-      xPercent: -50,
-      yPercent: -50,
-      x: first.x,
-      y: -sceneRect.height * 0.58,
-      rotate: -8,
-      scale: 0.88,
-      opacity: 0,
-      filter: 'drop-shadow(0 16px 20px #000000b0) blur(5px)',
-    });
-
-    gsap.set(cameraEl, { scale: 1.1, y: 10 });
-    gsap.set(logoMain, { opacity: 1, scale: 1 });
-    logoMain.style.setProperty('--paint', '0%');
-    stickers.forEach((el) => {
-      gsap.set(el, { autoAlpha: 0 });
-      el.style.setProperty('--paint', '0%');
-    });
-
-    const setPaint = (el, pct) => el.style.setProperty('--paint', `${pct}%`);
-    const cover = { p: 0 };
+    // Onomatopeya de cómic junto a la lata
+    const clac = (dx, dy, rot) => {
+      const el = document.createElement('span');
+      el.className = 'clac';
+      el.textContent = '¡clac!';
+      el.setAttribute('aria-hidden', 'true');
+      sceneEl.appendChild(el);
+      const c = local(canEl);
+      gsap.set(el, { left: c.left + c.width / 2 + dx, top: c.top + dy, rotate: rot, xPercent: -50, yPercent: -50 });
+      gsap.timeline({ onComplete: () => el.remove() })
+        .fromTo(el, { scale: 0, opacity: 0 }, { scale: 1.15, opacity: 1, duration: 0.14, ease: 'back.out(3)' })
+        .to(el, { scale: 1, duration: 0.1 })
+        .to(el, { opacity: 0, y: -14, duration: 0.3, ease: 'power1.in' }, '+=0.12');
+    };
 
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-    tl.to(startScreen, { opacity: 0, duration: 0.38, ease: 'power2.in' }, 0)
-      .to(wallBg, { opacity: 1, duration: 0.7, ease: 'power2.out' }, 0.06)
-      .to(cameraEl, { scale: 1.04, y: 0, duration: 1.35, ease: 'power2.out' }, 0.06)
-      .to('.wall-bg img', { scale: 1, duration: 2.4, ease: 'power1.out' }, 0.08)
-      .to(cinematicFlash, { opacity: 0.28, duration: 0.08 }, 0.08)
-      .to(cinematicFlash, { opacity: 0, duration: 0.5 }, 0.16)
-      .to(neonEls, { opacity: isMobile ? 0.14 : 0.22, duration: 1.1, stagger: 0.1 }, 0.18)
-      .to(sceneGlow, { opacity: 0.45, scale: 1, duration: 1 }, 0.2);
-
-    tl.to(canEl, {
-      opacity: 1,
-      x: first.x,
-      y: first.y,
-      rotate: holdRotate,
-      scale: 1,
-      duration: 0.78,
-      ease: 'expo.out',
-      filter: 'drop-shadow(0 12px 16px #000000a8) blur(0px)',
-      onStart: playSpraySound,
-      onUpdate: updateEmitter,
-    }, 0.8)
-      .to(canEl, { y: first.y + 8, duration: 0.14, ease: 'power2.in', onUpdate: updateEmitter }, 1.52)
-      .to(canEl, { y: first.y, duration: 0.26, ease: 'power3.out', onUpdate: updateEmitter }, 1.64)
-      .to(impactRing, { opacity: 0.45, scale: 1.4, duration: 0.36 }, 1.58)
-      .to(impactRing, { opacity: 0, duration: 0.22 }, 1.84)
-      .to(sprayCone, { opacity: isMobile ? 0.55 : 0.85, duration: 0.16 }, 1.66)
-      .to(paintGlow, { opacity: isMobile ? 0.55 : 0.8, duration: 0.16 }, 1.66)
-      .to(logoHalo, { opacity: 0.9, duration: 0.3 }, 1.7);
-
-    const paintPath = [
-      { lx: 0.08, ly: 0.08 },
-      { lx: 0.92, ly: 0.16 },
-      { lx: 0.08, ly: 0.30 },
-      { lx: 0.92, ly: 0.44 },
-      { lx: 0.08, ly: 0.58 },
-      { lx: 0.92, ly: 0.72 },
-      { lx: 0.10, ly: 0.86 },
-      { lx: 0.80, ly: 0.98 },
-    ].map((pt) => {
-      const pos = onLogo(pt.lx, pt.ly);
-      return {
-        x: pos.x,
-        y: pos.y,
-        rotate: holdRotate + (pt.lx > 0.5 ? 9 : -9),
-        duration: 0.42,
-        ease: 'sine.inOut',
-      };
-    });
-
-    tl.call(() => { isPainting = true; startWrist(); updateEmitter(); }, null, 1.68)
-      .to(cover, {
-        p: 100,
-        duration: 3.36,
-        ease: 'none',
-        onUpdate: () => setPaint(logoMain, cover.p),
-      }, 1.7)
-      .to(canEl, {
-        keyframes: paintPath,
-        onUpdate: updateEmitter,
-      }, 1.7);
-
-    const logoDone = 5.12;
-    tl.to(cameraEl, { x: 2, y: -2, duration: 0.05, repeat: 14, yoyo: true, ease: 'none' }, 1.75)
-      .call(() => {
-        setPaint(logoMain, 100);
-        logoMain.classList.add('is-painted');
-        stopWrist();
-        isPainting = false;
-        emitBurst(logoLeft + logoW / 2, logoTop + logoH / 2, 56);
-      }, null, logoDone)
-      .to(logoHalo, { opacity: 0.4, duration: 0.35 }, logoDone)
-      .to(logoMain, { filter: 'drop-shadow(0 0 28px #FF2E88aa)', duration: 0.22 }, logoDone)
-      .to(logoMain, { filter: 'drop-shadow(0 14px 28px #00000090)', duration: 0.55 }, logoDone + 0.25)
-      .to(logoMain, { '--shine-x': '220%', duration: 0.65, ease: 'power2.inOut' }, logoDone + 0.05)
-      .to(drips, {
-        height: () => gsap.utils.random(16, 32),
-        opacity: 0.9,
-        duration: 0.3,
-        stagger: 0.05,
-        ease: 'power1.out',
-      }, logoDone + 0.08)
-      .to(drips, { opacity: 0, y: 14, duration: 0.5, stagger: 0.05, ease: 'power1.in' }, logoDone + 0.55);
-
-    const sprayStamp = (el, startTime) => {
-      const r = el.getBoundingClientRect();
-      const s = sceneEl.getBoundingClientRect();
-      const left = r.left - s.left;
-      const top = r.top - s.top;
-      const a = toXY(left + r.width * 0.18 + offX, top + r.height * 0.18 + offY);
-      const b = toXY(left + r.width * 0.82 + offX, top + r.height * 0.55 + offY);
-      const c = toXY(left + r.width * 0.2 + offX, top + r.height * 0.92 + offY);
-      const sp = { p: 0 };
-
-      tl.set(el, { autoAlpha: 1 }, startTime)
-        .call(() => { el.classList.add('is-spraying'); el.style.setProperty('--paint', '0%'); }, null, startTime)
-        .to(canEl, { x: a.x, y: a.y, rotate: holdRotate, duration: 0.38, ease: 'power2.inOut', onUpdate: updateEmitter }, startTime)
-        .call(() => { isPainting = true; startWrist(); playSpraySound(); }, null, startTime + 0.3)
-        .to(canEl, { x: b.x, y: b.y, rotate: holdRotate + 8, duration: 0.5, ease: 'sine.inOut', onUpdate: updateEmitter }, startTime + 0.32)
-        .to(canEl, { x: c.x, y: c.y, rotate: holdRotate - 7, duration: 0.46, ease: 'sine.inOut', onUpdate: updateEmitter }, startTime + 0.82)
-        .to(sp, {
-          p: 100,
-          duration: 0.96,
-          ease: 'none',
-          onUpdate: () => setPaint(el, sp.p),
-        }, startTime + 0.32)
-        .call(() => {
-          setPaint(el, 100);
-          el.classList.add('is-painted');
-          el.classList.add('is-stuck');
-          stopWrist();
-          isPainting = false;
-          emitBurst(left + r.width / 2, top + r.height / 2, 18);
-        }, null, startTime + 1.3);
+    const shakeCamera = (at, power = 4, reps = 6) => {
+      tl.to(cameraEl, { x: power, y: -power * 0.6, duration: 0.04, repeat: reps, yoyo: true, ease: 'none' }, at)
+        .to(cameraEl, { x: 0, y: 0, duration: 0.08 }, at + 0.04 * (reps + 1));
     };
 
-    if (stickers[0]) sprayStamp(stickers[0], 5.7);
-    if (stickers[1]) sprayStamp(stickers[1], 7.05);
-    if (stickers[2]) sprayStamp(stickers[2], 8.4);
+    /* ---------- Estado inicial ---------- */
+    const first = onLogo(0.06, 0.06);
+    const center = toXY(SW * 0.5, SH * 0.46);
+    gsap.set(canEl, {
+      xPercent: -50, yPercent: -50,
+      x: center.x, y: -SH * 0.7,
+      rotate: -160, scale: 1.25, opacity: 0,
+      filter: 'drop-shadow(0 16px 20px #000000b0) blur(6px)',
+    });
+    gsap.set(cameraEl, { scale: 1.16, y: 14 });
+    logoMain.style.setProperty('--paint', '0%');
+    stickers.forEach((el) => gsap.set(el, { autoAlpha: 0 }));
+    const swoosh = document.querySelector('.tag-swoosh');
+    const swooshPath = swoosh ? swoosh.querySelector('path') : null;
+    const swooshLen = swooshPath ? swooshPath.getTotalLength() : 0;
 
-    tl.to(sprayCone, { opacity: 0, duration: 0.2 }, 9.7)
-      .to(paintGlow, { opacity: 0, duration: 0.2 }, 9.7)
-      .to(canEl, {
-        x: isMobile ? 150 : 200,
-        y: '-=36',
-        rotate: 14,
-        opacity: 0,
-        duration: 0.48,
-        ease: 'power3.in',
-      }, 9.73)
-      .to(cameraEl, { scale: 1.1, x: 0, y: 0, duration: 0.9, ease: 'power1.inOut' }, 9.65)
-      .to(fadeOverlay, { opacity: 1, duration: 0.75, ease: 'power1.in' }, 10.5)
-      .call(goHome, null, 10.9);
+    /* ---------- Acto 1: entra el muro ---------- */
+    tl.to(wallBg, { opacity: 1, duration: 0.7, ease: 'power2.out' }, 0.05)
+      .to(cameraEl, { scale: 1.06, y: 0, duration: 1.6, ease: 'power2.out' }, 0.05)
+      .to('.wall-bg img', { scale: 1, duration: 2.4, ease: 'power1.out' }, 0.08)
+      .to(cinematicFlash, { opacity: 0.3, duration: 0.08 }, 0.08)
+      .to(cinematicFlash, { opacity: 0, duration: 0.5 }, 0.16)
+      .to(neonEls, { opacity: isMobile ? 0.16 : 0.24, duration: 1.1, stagger: 0.1 }, 0.18)
+      .to(sceneGlow, { opacity: 0.45, scale: 1, duration: 1 }, 0.2);
+
+    /* ---------- Acto 2: la lata cae girando y se agita ---------- */
+    tl.to(canEl, {
+      opacity: 1, y: center.y, rotate: -8,
+      filter: 'drop-shadow(0 18px 22px #000000b0) blur(0px)',
+      duration: 0.75, ease: 'back.out(1.6)', onUpdate: updateEmitter,
+    }, 0.55)
+      .to(impactRing, { opacity: 0.5, scale: 1.6, duration: 0.4 }, 1.18)
+      .to(impactRing, { opacity: 0, duration: 0.25 }, 1.5);
+    shakeCamera(1.2, isMobile ? 3 : 5, 3);
+
+    // Agitar la lata: el gesto clásico antes de pintar
+    tl.to(canBody, { y: -18, rotate: 14, duration: 0.07, repeat: 9, yoyo: true, ease: 'sine.inOut' }, 1.4)
+      .to(canBody, { y: 0, rotate: 0, duration: 0.1 }, 2.1)
+      .call(() => clac(-64, -10, -12), null, 1.48)
+      .call(() => clac(68, 34, 10), null, 1.78);
+
+    /* ---------- Acto 3: pintar el logo ---------- */
+    tl.to(canEl, {
+      x: first.x, y: first.y, rotate: holdRotate, scale: 1,
+      duration: 0.45, ease: 'power3.inOut', onUpdate: updateEmitter,
+    }, 2.1)
+      .to(logoHalo, { opacity: 0.9, duration: 0.3 }, 2.5);
+
+    const paintPath = [
+      { lx: 0.08, ly: 0.08 }, { lx: 0.92, ly: 0.16 }, { lx: 0.08, ly: 0.30 }, { lx: 0.92, ly: 0.44 },
+      { lx: 0.08, ly: 0.58 }, { lx: 0.92, ly: 0.72 }, { lx: 0.10, ly: 0.86 }, { lx: 0.80, ly: 0.98 },
+    ].map((pt) => {
+      const p = onLogo(pt.lx, pt.ly);
+      return { x: p.x, y: p.y, rotate: holdRotate + (pt.lx > 0.5 ? 9 : -9), duration: 0.34, ease: 'sine.inOut' };
+    });
+    const cover = { p: 0 };
+    const paintStart = 2.58;
+    const paintDur = paintPath.length * 0.34;
+    tl.call(() => { sprayOn(); playSpraySound(); }, null, paintStart)
+      .to(cover, { p: 100, duration: paintDur, ease: 'none', onUpdate: () => setPaint(logoMain, cover.p) }, paintStart)
+      .to(canEl, { keyframes: paintPath, onUpdate: updateEmitter }, paintStart);
+    shakeCamera(paintStart + 0.05, 1.6, Math.round(paintDur / 0.08));
+
+    const logoDone = paintStart + paintDur;
+    tl.call(() => {
+      setPaint(logoMain, 100);
+      logoMain.classList.add('is-painted');
+      sprayOff();
+      emitBurst(logoLeft + logoW / 2, logoTop + logoH / 2, 60);
+    }, null, logoDone)
+      .to(logoHalo, { opacity: 0.4, duration: 0.35 }, logoDone)
+      .to(logoMain, { '--shine-x': '220%', duration: 0.65, ease: 'power2.inOut' }, logoDone + 0.05)
+      .to(drips, { height: () => gsap.utils.random(22, 54), opacity: 0.95, duration: 0.9, stagger: 0.06, ease: 'power1.in' }, logoDone + 0.05)
+      .to(drips, { opacity: 0, duration: 0.4 }, logoDone + 1.6);
+
+    /* ---------- Acto 4: firma bajo el logo + stickers pegados a mano ---------- */
+    const tagStart = logoDone + 0.2;
+    if (swoosh && swooshPath) {
+      const box = local(swoosh);
+      const vb = swoosh.viewBox.baseVal;
+      const pts = Array.from({ length: 7 }, (_, i) => {
+        const pt = swooshPath.getPointAtLength((swooshLen * i) / 6);
+        const p = toXY(box.left + (pt.x / vb.width) * box.width + offX, box.top + (pt.y / vb.height) * box.height + offY);
+        return { x: p.x, y: p.y, rotate: holdRotate + (i % 2 ? 6 : -6), duration: 0.11, ease: 'none' };
+      });
+      tl.to(canEl, { x: pts[0].x, y: pts[0].y, duration: 0.25, ease: 'power2.inOut', onUpdate: updateEmitter }, tagStart)
+        .call(() => { sprayOn(); playSpraySound(); }, null, tagStart + 0.22)
+        .to(canEl, { keyframes: pts.slice(1), onUpdate: updateEmitter }, tagStart + 0.25)
+        .fromTo(swooshPath, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.66, ease: 'none' }, tagStart + 0.25)
+        .call(sprayOff, null, tagStart + 0.92);
+    }
+
+    const slapStart = tagStart + 0.55;
+    stickers.forEach((el, i) => {
+      const at = slapStart + i * 0.24;
+      const tilt = [-4, 3, -2][i] || 0;
+      tl.set(el, { autoAlpha: 1 }, at)
+        .call(() => el.classList.add('is-painted'), null, at)
+        .fromTo(el,
+          { scale: 2.2, rotate: tilt * 5, y: -40, filter: 'blur(6px) brightness(1.6)' },
+          { scale: 1, rotate: tilt, y: 0, filter: 'blur(0px) brightness(1)', duration: 0.32, ease: 'back.out(2.2)' }, at)
+        .call(() => {
+          el.classList.add('is-stuck');
+          const b = local(el);
+          emitBurst(b.left + b.width / 2, b.top + b.height / 2, 22);
+        }, null, at + 0.22);
+      shakeCamera(at + 0.2, isMobile ? 3 : 5, 3);
+    });
+
+    /* ---------- Momento héroe: aberración cromática ---------- */
+    const heroAt = slapStart + stickers.length * 0.24 + 0.35;
+    tl.fromTo(logoMain,
+      { filter: 'drop-shadow(-8px 0px 0px rgba(20,224,196,.8)) drop-shadow(8px 0px 0px rgba(255,46,136,.8))' },
+      { filter: 'drop-shadow(0px 0px 0px rgba(20,224,196,0)) drop-shadow(0px 0px 0px rgba(255,46,136,0))', duration: 0.5, ease: 'power2.out' }, heroAt)
+      .fromTo('.brand-lockup', { scale: 1.035 }, { scale: 1, duration: 0.6, ease: 'power2.out' }, heroAt)
+      .to(cinematicFlash, { opacity: 0.22, duration: 0.06 }, heroAt)
+      .to(cinematicFlash, { opacity: 0, duration: 0.4 }, heroAt + 0.06);
+
+    /* ---------- Acto 5: la lata cubre la pantalla de negro ----------
+       El home arranca negro y se revela con spray: la transición es continua. */
+    const blackoutAt = heroAt + 0.55;
+    const ink = document.createElement('canvas');
+    ink.className = 'ink-canvas';
+    ink.setAttribute('aria-hidden', 'true');
+    sceneEl.appendChild(ink);
+    const ictx = ink.getContext('2d');
+    const idpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
+    ink.width = Math.round(SW * idpr);
+    ink.height = Math.round(SH * idpr);
+    ictx.scale(idpr, idpr);
+
+    const R = Math.max(SW, SH) * (isMobile ? 0.2 : 0.17);
+    const rows = Math.ceil(SH / (R * 1.2)) + 1;
+    const INK_COLORS = ['#14e0c4', '#ff2e88', '#f2ece0'];
+    const strokes = Array.from({ length: rows }, (_, i) => {
+      const y = (i * SH) / (rows - 1);
+      const ltr = i % 2 === 0;
+      return { x0: ltr ? -R : SW + R, x1: ltr ? SW + R : -R, y0: y - R * 0.2, y1: y + R * 0.2, p: 0, last: 0 };
+    });
+    const head = (s, t) => ({ x: s.x0 + (s.x1 - s.x0) * t, y: s.y0 + (s.y1 - s.y0) * t });
+    const stamp = (x, y) => {
+      const g = ictx.createRadialGradient(x, y, 0, x, y, R);
+      g.addColorStop(0, 'rgba(7,8,10,1)');
+      g.addColorStop(0.6, 'rgba(7,8,10,.96)');
+      g.addColorStop(1, 'rgba(7,8,10,0)');
+      ictx.fillStyle = g;
+      ictx.beginPath();
+      ictx.arc(x, y, R, 0, Math.PI * 2);
+      ictx.fill();
+      for (let k = 0; k < (isMobile ? 6 : 12); k++) {
+        const a = Math.random() * Math.PI * 2;
+        const d = R * (0.9 + Math.random() * 0.45);
+        ictx.globalAlpha = Math.random() * 0.7 + 0.25;
+        ictx.fillStyle = INK_COLORS[(Math.random() * INK_COLORS.length) | 0];
+        ictx.beginPath();
+        ictx.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, Math.random() * 2.6 + 0.6, 0, Math.PI * 2);
+        ictx.fill();
+      }
+      ictx.globalAlpha = 1;
+    };
+
+    // ~1,8 s en total sin importar cuántas pasadas necesite la pantalla
+    const strokeDur = gsap.utils.clamp(0.24, 0.4, 1.8 / rows);
+    tl.call(() => { sprayOn(); playSpraySound(); }, null, blackoutAt)
+      .to(cameraEl, { scale: 1.12, duration: rows * strokeDur + 0.4, ease: 'power1.in' }, blackoutAt);
+    strokes.forEach((s, i) => {
+      tl.to(s, {
+        p: 1,
+        duration: strokeDur,
+        ease: 'sine.inOut',
+        onUpdate: () => {
+          const n = Math.max(1, Math.ceil(((s.p - s.last) * (SW + R * 2)) / (R * 0.22)));
+          for (let k = 1; k <= n; k++) {
+            const q = head(s, s.last + ((s.p - s.last) * k) / n);
+            stamp(q.x, q.y);
+          }
+          s.last = s.p;
+          // La lata sigue la cabeza del trazo y gira según la dirección
+          const h = head(s, s.p);
+          const c = toXY(h.x + offX, h.y + offY - R * 0.15);
+          gsap.set(canEl, { x: c.x, y: c.y, rotate: holdRotate + (s.x1 > s.x0 ? 10 : -26) });
+          updateEmitter();
+        },
+      }, blackoutAt + 0.05 + i * strokeDur);
+    });
+    const blackoutEnd = blackoutAt + 0.05 + rows * strokeDur;
+    tl.call(sprayOff, null, blackoutEnd - 0.05)
+      .to(canEl, { y: `-=${SH * 0.4}`, x: `+=${SW * 0.2}`, rotate: 40, opacity: 0, duration: 0.4, ease: 'power3.in' }, blackoutEnd - 0.05)
+      .to(fadeOverlay, { opacity: 1, duration: 0.25, ease: 'none' }, blackoutEnd + 0.1)
+      .call(goHome, null, blackoutEnd + 0.38);
 
     if (skipBtn) {
       skipBtn.classList.add('is-visible');
       gsap.to(skipBtn, { opacity: 1, duration: 0.35, delay: 0.7 });
       skipBtn.addEventListener('click', () => {
         tl.pause();
-        isPainting = false;
-        stopWrist();
+        sprayOff();
         gsap.to(fadeOverlay, { opacity: 1, duration: 0.3, onComplete: goHome });
       }, { once: true });
     }

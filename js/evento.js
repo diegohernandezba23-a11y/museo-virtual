@@ -6,200 +6,170 @@
   const event = MUSEO.getEvent(params.get("id")) || MUSEO.events[0];
   if (!event) return;
 
-  const usesPanelLayout = ["narra-muros", "ecologia-integral"].includes(event.id);
   document.title = `${event.name} | Museo Virtual`;
-  const desc = document.querySelector('meta[name="description"]');
-  if (desc) desc.setAttribute("content", event.lead);
+  document.querySelector('meta[name="description"]')?.setAttribute("content", event.lead);
 
-  const others = MUSEO.events.filter((item) => item.id !== event.id);
-  const group = event.group[0];
+  const { icons } = MUSEO;
   const encode = (src) => encodeURI(src);
-  const introPhoto = event.introPhoto || event.cover;
-  const introDesktopPhotoSource = event.introDesktopPhoto
-    ? `<source media="(min-width: 901px)" srcset="${encode(event.introDesktopPhoto)}">`
+  const pad = (n) => String(n).padStart(2, "0");
+  const next = MUSEO.events.filter((item) => item.id !== event.id)[0];
+  const group = event.group[0];
+  const ig = event.artistInstagram;
+  const videoCount = event.videos.length;
+
+  const heroSources = [
+    event.introDesktopPhoto ? `<source media="(min-width: 901px)" srcset="${encode(event.introDesktopPhoto)}">` : "",
+    event.introMobilePhoto ? `<source media="(max-width: 900px)" srcset="${encode(event.introMobilePhoto)}">` : "",
+  ].join("");
+
+  const facts = [
+    event.obrasCount ? { t: "Obras", d: pad(event.obrasCount) } : null,
+    videoCount ? { t: videoCount === 1 ? "Video" : "Voces", d: pad(videoCount) } : null,
+  ].filter(Boolean);
+
+  const igButton = (label) => ig
+    ? `<a class="button button--ghost" href="${ig.href}" target="_blank" rel="noopener noreferrer">${icons.instagram} ${label} ${ig.handle}<span class="visually-hidden"> (Instagram, abre en otra pestaña)</span></a>`
     : "";
-  const introAlt = event.introPhotoAlt || event.coverAlt;
-  const introPhotoSource = event.introMobilePhoto
-    ? `<source media="(max-width: 900px)" srcset="${encode(event.introMobilePhoto)}">`
-    : "";
-  const artistLink = event.artistInstagram
-    ? `<a class="button button--ghost instagram-link" href="${event.artistInstagram.href}" target="_blank" rel="noopener noreferrer">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <rect x="3" y="3" width="18" height="18" rx="5"></rect>
-            <circle cx="12" cy="12" r="4"></circle>
-            <circle class="instagram-link__dot" cx="17.5" cy="6.5" r="1"></circle>
-          </svg>
-          <span>Visita al artista · ${event.artistInstagram.handle}</span>
-        </a>`
-      : "";
-  const videosMarkup = event.videos.length
+
+  const voicesMarkup = videoCount
     ? `
-    <section class="voices voices--${event.id}" id="voces" aria-labelledby="voices-title">
+    <section class="section voices voices--${event.id}" id="voces" aria-labelledby="voices-title">
       <div class="section-heading">
         <div>
-          <p class="eyebrow">Audiovisual</p>
-          <h2 id="voices-title">${event.videosTitle}</h2>
-          <p class="lead">${event.videosLead}</p>
+          <p class="eyebrow" data-reveal>Audiovisual</p>
+          <h2 id="voices-title" data-split>${event.videosTitle}</h2>
         </div>
+        <p class="lead" data-reveal style="--d:.12s">${event.videosLead}</p>
       </div>
-      <div class="voices__layout ${event.videos.length === 1 ? "is-single" : ""}" data-voices>
-        <div class="voices__stage voices__stage--${event.id}">
-          <video data-voice-main controls playsinline preload="metadata">
-            <source src="${encode(event.videos[0].src)}" type="video/mp4">
+      <div class="voices__layout ${videoCount === 1 ? "is-single" : ""}" data-reveal>
+        <div class="voices__stage">
+          <video data-voice-main controls playsinline preload="metadata" aria-label="${event.videos[0].label}">
+            <source src="${encode(event.videos[0].src)}#t=0.1" type="video/mp4">
           </video>
         </div>
-        ${
-          event.videos.length > 1
-            ? `<div class="voices__rail" role="group" aria-label="Seleccionar testimonio">
-                ${event.videos
-                  .map(
-                    (video, i) => `
-                  <button class="voices__pick ${i === 0 ? "is-active" : ""}" type="button" data-voice-src="${encode(video.src)}" aria-pressed="${i === 0 ? "true" : "false"}">
-                    <span>${String(i + 1).padStart(2, "0")}</span>
-                    <strong>${video.label}</strong>
-                    <em>Reproducir</em>
-                  </button>`
-                  )
-                  .join("")}
-              </div>`
-            : ""
-        }
+        ${videoCount > 1
+          ? `<div class="voices__rail" role="group" aria-label="Seleccionar testimonio">
+              ${event.videos.map((video, i) => `
+                <button class="voices__pick ${i === 0 ? "is-active" : ""}" type="button" data-voice-src="${encode(video.src)}" data-voice-label="${video.label}" aria-pressed="${i === 0}">
+                  <span>${pad(i + 1)}</span>
+                  <div><strong>${video.label}</strong><em>${i === 0 ? "En pantalla" : "Reproducir"}</em></div>
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5v14l11-7z"/></svg>
+                </button>`).join("")}
+            </div>`
+          : ""}
       </div>
     </section>`
     : "";
 
   root.innerHTML = `
-    <section class="event-hero event-hero--${event.id}" style="--event-accent:${event.accent}">
-      <div class="event-hero__media" aria-hidden="true">
-        <img class="event-hero__wash" src="${encode(event.cover)}" alt="">
-        <img class="event-hero__photo" src="${encode(event.cover)}" alt="">
+    <section class="ev-hero ev-hero--${event.id}" aria-labelledby="ev-title">
+      <div class="ev-hero__media">
+        <picture>
+          ${heroSources}
+          <img src="${encode(event.introPhoto || event.cover)}" alt="${event.introPhotoAlt || event.coverAlt}" fetchpriority="high" data-parallax>
+        </picture>
       </div>
-      <div class="event-hero__veil"></div>
-      <div class="event-hero__copy" data-reveal>
-        <p class="hero__kicker"><i></i> ${event.kicker}</p>
-        <h1>${event.name}</h1>
-        <p class="lead">${event.headline}</p>
-        <div class="hero__actions">
-          <a class="button" href="#obra">${event.videos.length ? "Ver la obra" : "Recorrer"}</a>
-          ${event.galleryHref ? `<a class="button button--ghost" href="${event.galleryHref}">Sala de obras</a>` : event.videos.length ? `<a class="button button--ghost" href="#voces">Ver el video</a>` : ""}
+      <div class="ev-hero__copy">
+        <p class="hero__kicker" data-reveal><i></i> ${event.kicker}</p>
+        <h1 id="ev-title" data-split>${event.name}</h1>
+        <p class="lead" data-reveal style="--d:.25s">${event.headline}</p>
+        <div class="hero__actions" data-reveal style="--d:.35s">
+          <a class="button" href="#obra" data-magnetic>Ver la obra <span class="button__icon">${icons.arrow}</span></a>
+          ${event.galleryHref
+            ? `<a class="button button--ghost" href="${event.galleryHref}" data-magnetic>Sala de obras</a>`
+            : videoCount ? `<a class="button button--ghost" href="#voces" data-magnetic>Ver el video</a>` : ""}
         </div>
       </div>
-      <p class="hero__meta">${event.place}</p>
     </section>
 
-    <section class="scene-chapter ${usesPanelLayout ? "event-feature event-feature--panel" : ""} scene-chapter--intro scene-chapter--${event.id}" aria-labelledby="encuentro-title">
-      <figure class="scene-chapter__media ${usesPanelLayout ? "event-feature__visual" : ""}">
-        <img class="scene-chapter__wash" src="${encode(introPhoto)}" alt="" aria-hidden="true">
-        <picture class="scene-chapter__picture">
-          ${introDesktopPhotoSource}
-          ${introPhotoSource}
-          <img class="scene-chapter__photo" src="${encode(introPhoto)}" alt="${introAlt}" width="1600" height="900" loading="lazy">
-        </picture>
-      </figure>
-      <div class="scene-chapter__veil" aria-hidden="true"></div>
-      <div class="scene-chapter__copy ${usesPanelLayout ? "event-feature__copy" : ""}" data-reveal>
-        <p class="eyebrow">El encuentro</p>
-        <h2 id="encuentro-title">${event.introTitle || event.headline}</h2>
+    <section class="section ev-intro" aria-labelledby="encuentro-title">
+      <div>
+        <p class="eyebrow" data-reveal>El encuentro</p>
+        <h2 id="encuentro-title" data-split>${event.introTitle || event.headline}</h2>
+      </div>
+      <div data-reveal style="--d:.12s">
         <p class="lead">${event.lead}</p>
+        <dl class="facts">${facts.map((f) => `<div><dt>${f.t}</dt><dd>${f.d}</dd></div>`).join("")}</dl>
       </div>
     </section>
 
-    <section class="scene-chapter scene-chapter--obra scene-chapter--${event.id}" id="obra" aria-labelledby="obra-title">
-      <figure class="scene-chapter__media">
-        <img class="scene-chapter__wash" src="${encode(event.cover)}" alt="" aria-hidden="true">
-        <img class="scene-chapter__photo" src="${encode(event.cover)}" alt="${event.coverAlt}" loading="eager">
+    <section class="section ev-exhibit" id="obra" aria-labelledby="obra-title">
+      <figure class="exhibit__frame" data-reveal="clip" data-cursor="Obra">
+        <img src="${encode(event.cover)}" alt="${event.coverAlt}" loading="lazy">
       </figure>
-      <div class="scene-chapter__veil" aria-hidden="true"></div>
-      <div class="scene-chapter__copy" data-reveal>
+      <div class="placard" data-reveal style="--d:.2s">
         <p class="eyebrow">Obra principal</p>
         <h2 id="obra-title">${event.name}</h2>
-        <p class="lead">${event.masterpieceCaption}</p>
-        ${artistLink}
+        <p>${event.masterpieceCaption}</p>
+        ${igButton("Visita al artista ·")}
       </div>
     </section>
 
-    ${
-      group
-        ? `<section class="scene-chapter ${event.id === "narra-muros" ? "event-feature event-feature--panel" : ""} scene-chapter--community scene-chapter--${event.id}" aria-labelledby="community-title">
-            <figure class="scene-chapter__media ${event.id === "narra-muros" ? "event-feature__visual" : ""}">
-              <img class="scene-chapter__wash" src="${encode(group.src)}" alt="" aria-hidden="true">
-              <picture class="scene-chapter__picture">
-                ${group.mobileSrc ? `<source media="(max-width: 900px)" srcset="${encode(group.mobileSrc)}">` : ""}
-                <img class="scene-chapter__photo" src="${encode(group.src)}" alt="${group.alt}" width="1600" height="895" loading="lazy">
-              </picture>
-            </figure>
-            <div class="scene-chapter__veil" aria-hidden="true"></div>
-            <div class="scene-chapter__copy ${event.id === "narra-muros" ? "event-feature__copy" : ""}" data-reveal>
-              <p class="eyebrow">Quienes hicieron posible esta experiencia</p>
-              <h2 id="community-title">${event.groupTitle}</h2>
-              <p class="lead">${event.groupLead}</p>
-            </div>
-          </section>`
-        : ""
-    }
+    ${group
+      ? `<section class="ev-community" aria-labelledby="community-title">
+          <figure class="ev-community__media">
+            <picture>
+              ${group.mobileSrc ? `<source media="(max-width: 900px)" srcset="${encode(group.mobileSrc)}">` : ""}
+              <img src="${encode(group.src)}" alt="${group.alt}" loading="lazy" data-parallax>
+            </picture>
+          </figure>
+          <div class="ev-community__copy">
+            <p class="eyebrow" data-reveal>Quienes hicieron posible esta experiencia</p>
+            <h2 id="community-title" data-split>${event.groupTitle}</h2>
+            <p class="lead" data-reveal style="--d:.15s">${event.groupLead}</p>
+          </div>
+        </section>`
+      : ""}
 
-    ${videosMarkup}
+    ${voicesMarkup}
 
-    ${
-      event.galleryHref
-        ? `<section class="section gallery-invite" data-reveal>
-            <p class="eyebrow">${String(event.obrasCount).padStart(2, "0")} obras</p>
-            <h2>Las creaciones de quienes participaron</h2>
-            <p class="lead">Una sala inmersiva recorre las pinturas realizadas durante el encuentro. Gira el muro, acerca cada obra y mírala completa.</p>
-            <a class="button" href="${event.galleryHref}">${event.galleryLabel}</a>
-          </section>`
-        : ""
-    }
+    ${event.galleryHref
+      ? `<section class="section ev-invite" aria-labelledby="invite-title">
+          <div>
+            <p class="eyebrow" data-reveal>${pad(event.obrasCount)} obras</p>
+            <h2 id="invite-title" data-split>Las creaciones de quienes participaron</h2>
+            <p class="lead" data-reveal style="--d:.12s">Una sala inmersiva recorre las pinturas realizadas durante el encuentro. Gira el muro, acerca cada obra y mírala completa.</p>
+            <div data-reveal style="--d:.2s">
+              <a class="button" href="${event.galleryHref}" data-magnetic>${event.galleryLabel} <span class="button__icon">${icons.arrow}</span></a>
+            </div>
+          </div>
+          <a class="fan" href="${event.galleryHref}" data-cursor="Abrir" aria-label="${event.galleryLabel}" data-reveal style="--d:.15s">
+            ${[3, 7, 1, 12, 14].map((n, i) => `<img src="assets/img/Obras/Pintura-${n}-thumb.webp" alt="" loading="lazy" style="--k:${i - 2}">`).join("")}
+          </a>
+        </section>`
+      : ""}
 
-    ${
-      others.length
-        ? `<section class="section more-events" aria-labelledby="more-title">
-            <div class="section-heading">
-              <div>
-                <p class="eyebrow">Continúa el recorrido</p>
-                <h2 id="more-title">Otros eventos del museo</h2>
-              </div>
-              <a class="button button--ghost" href="home.html?from=museum#eventos">Todos los eventos</a>
+    ${next
+      ? `<section class="section ev-next" aria-labelledby="next-title">
+          <a class="ev-next__card" href="evento.html?id=${next.id}" data-cursor="Ir" data-reveal="clip">
+            <img src="${encode(next.cover)}" alt="" loading="lazy">
+            <div>
+              <p class="eyebrow" id="next-title">Siguiente sala · ${next.kicker}</p>
+              <strong>${next.name} ${icons.arrow}</strong>
             </div>
-            <div class="more-events__grid">
-              ${others
-                .map(
-                  (item) => `
-                <a class="more-card" href="evento.html?id=${item.id}">
-                  <img src="${encode(item.cover)}" alt="${item.coverAlt}" loading="lazy">
-                  <span>${item.kicker}</span>
-                  <strong>${item.name}</strong>
-                </a>`
-                )
-                .join("")}
-            </div>
-          </section>`
-        : ""
-    }
+          </a>
+        </section>`
+      : ""}
   `;
 
+  /* ---- Selector de testimonios ---- */
   const main = root.querySelector("[data-voice-main]");
   const picks = [...root.querySelectorAll("[data-voice-src]")];
-
-  const loadVoice = (src, btn) => {
-    if (!main) return;
-    const source = main.querySelector("source");
-    if (source) source.src = src;
-    main.src = src;
-    main.load();
-    picks.forEach((pick) => {
-      const on = pick === btn;
-      pick.classList.toggle("is-active", on);
-      pick.setAttribute("aria-pressed", on ? "true" : "false");
-    });
-  };
-
   picks.forEach((btn) => {
     btn.addEventListener("click", () => {
-      loadVoice(btn.dataset.voiceSrc, btn);
-      main?.play?.().catch((error) => {
-        console.error("No se pudo reproducir el testimonio seleccionado.", error);
+      if (!main) return;
+      main.querySelector("source")?.setAttribute("src", btn.dataset.voiceSrc);
+      main.src = btn.dataset.voiceSrc;
+      main.setAttribute("aria-label", btn.dataset.voiceLabel);
+      main.load();
+      picks.forEach((pick) => {
+        const on = pick === btn;
+        pick.classList.toggle("is-active", on);
+        pick.setAttribute("aria-pressed", String(on));
+        const label = pick.querySelector("em");
+        if (label) label.textContent = on ? "En pantalla" : "Reproducir";
       });
+      main.play?.().catch(() => {});
     });
   });
 })();

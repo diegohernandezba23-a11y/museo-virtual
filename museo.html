@@ -4,18 +4,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#050608">
-  <title>Obras | Museo Virtual</title>
+  <title>Sala de obras | Museo Virtual</title>
+  <meta name="description" content="Sala inmersiva con las 18 obras creadas por jóvenes de Engativá en Narra Muros.">
+  <script>
+    try { if (sessionStorage.getItem("nm-curtain") === "1") { document.documentElement.classList.add("is-entering"); sessionStorage.removeItem("nm-curtain"); } } catch (e) {}
+  </script>
+  <link rel="icon" type="image/png" href="assets/img/logos/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Rubik+Wet+Paint&family=Space+Mono:wght@400;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Rubik+Wet+Paint&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/platform.css">
   <link rel="stylesheet" href="css/obras.css">
 </head>
 <body class="page-museo">
+  <a class="skip-link" href="#galeria">Saltar a la galería</a>
   <div class="page-transition" aria-hidden="true"></div>
-  <div class="cursor" aria-hidden="true"></div>
-  <div class="cursor-dot" aria-hidden="true"></div>
 
   <!-- ===== Callejón: pared, piso mojado, tubos de neón, niebla ===== -->
   <div class="alley" aria-hidden="true">
@@ -29,14 +33,14 @@
   <canvas class="fx-canvas" aria-hidden="true"></canvas>
 
   <header class="site-header">
-    <a class="brand" href="home.html?from=museum">
-      <img src="assets/img/logos/narramuros-logo.png" alt="">
+    <a class="brand" href="home.html?from=museum" aria-label="Narra Muros, Museo Virtual: inicio">
+      <img src="assets/img/logos/narramuros-mark.webp" alt="" width="46" height="33">
       Museo <span>Virtual</span>
     </a>
-    <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav" aria-label="Abrir menú">
-      <span></span><span></span>
+    <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav">
+      <span data-nav-label>Menú</span><span class="nav-toggle__bars" aria-hidden="true"></span>
     </button>
-    <nav id="site-nav" data-site-nav aria-label="Navegación principal"></nav>
+    <nav class="site-nav" id="site-nav" data-site-nav aria-label="Navegación principal"></nav>
   </header>
 
   <main class="alley-main">
@@ -68,8 +72,8 @@
     </div>
 
     <!-- ===== Galería 3D circular ===== -->
-    <section class="gallery" data-gallery aria-label="Galería de obras">
-      <div class="gallery__stage" data-stage>
+    <section class="gallery" id="galeria" tabindex="-1" data-gallery aria-label="Galería de obras">
+      <div class="gallery__stage" data-stage data-cursor="Arrastra">
         <div class="gallery__tilt" data-tilt>
           <div class="gallery__ring" data-ring></div>
         </div>
@@ -81,7 +85,7 @@
         </button>
 
         <div class="hud__meter">
-          <div class="hud__count"><span data-index>01</span><i>/</i><span data-total>18</span></div>
+          <div class="hud__count" aria-live="polite" aria-atomic="true"><span class="visually-hidden">Obra </span><span data-index>01</span><i aria-hidden="true">/</i><span class="visually-hidden"> de </span><span data-total>18</span></div>
           <div class="hud__track"><span data-progress></span></div>
           <p class="hud__hint">Gira el muro: arrastra, desliza o usa ← →. Toca la obra para verla completa.</p>
         </div>
@@ -98,9 +102,17 @@
     <div class="lightbox__card" role="dialog" aria-modal="true" aria-label="Obra ampliada">
       <button class="lightbox__close" type="button" data-lightbox-close aria-label="Cerrar">✕</button>
       <div class="lightbox__img"><img data-lightbox-img alt=""></div>
-      <div class="lightbox__meta">
-        <h2 data-lightbox-title></h2>
-        <p data-lightbox-author></p>
+      <div class="lightbox__nav">
+        <button class="icon-button" type="button" data-lightbox-prev aria-label="Obra anterior">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4 7 12l8 8"/></svg>
+        </button>
+        <div class="lightbox__meta">
+          <h2 data-lightbox-title></h2>
+          <p data-lightbox-author></p>
+        </div>
+        <button class="icon-button" type="button" data-lightbox-next aria-label="Obra siguiente">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4l8 8-8 8"/></svg>
+        </button>
       </div>
     </div>
   </div>

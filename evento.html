@@ -5,38 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#07080a">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="description" content="Evento del museo virtual.">
+  <meta name="description" content="Evento del museo virtual Narra Muros.">
   <title>Evento | Museo Virtual</title>
+  <script>
+    try { if (sessionStorage.getItem("nm-curtain") === "1") { document.documentElement.classList.add("is-entering"); sessionStorage.removeItem("nm-curtain"); } } catch (e) {}
+  </script>
+  <link rel="icon" type="image/png" href="assets/img/logos/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/platform.css">
 </head>
 <body class="page-evento">
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
   <div class="page-transition" aria-hidden="true"></div>
-  <div class="cursor" aria-hidden="true"></div>
-  <div class="cursor-dot" aria-hidden="true"></div>
-  <canvas class="fx-canvas" aria-hidden="true"></canvas>
 
   <header class="site-header">
-    <a class="brand" href="home.html?from=museum">
-      <img src="assets/img/logos/narramuros-logo.png" alt="">
+    <a class="brand" href="home.html?from=museum" aria-label="Narra Muros, Museo Virtual: inicio">
+      <img src="assets/img/logos/narramuros-mark.webp" alt="" width="46" height="33">
       Museo <span>Virtual</span>
     </a>
-    <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav" aria-label="Abrir menú">
-      <span></span><span></span>
+    <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav">
+      <span data-nav-label>Menú</span><span class="nav-toggle__bars" aria-hidden="true"></span>
     </button>
-    <nav id="site-nav" data-site-nav aria-label="Navegación principal"></nav>
+    <nav class="site-nav" id="site-nav" data-site-nav aria-label="Navegación principal"></nav>
   </header>
 
   <main id="contenido" data-evento></main>
 
-  <footer class="site-footer">
-    <a href="home.html?from=museum">← Volver al museo</a>
-    <span>Museo Virtual</span>
-  </footer>
+  <footer class="site-footer" data-site-footer></footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>

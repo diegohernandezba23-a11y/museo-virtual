@@ -7,10 +7,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="description" content="Museo virtual de arte urbano, graffiti y creación colectiva." />
-  <title>Museo Virtual</title>
+  <title>Narra Muros | Museo Virtual</title>
+  <link rel="icon" type="image/png" href="assets/img/logos/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Rubik+Wet+Paint&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/intro.css" />
 </head>
@@ -38,7 +39,7 @@
     </svg>
     <canvas class="start-fx" id="start-fx" aria-hidden="true"></canvas>
     <div class="start-sparks" aria-hidden="true"></div>
-    <img class="start-logo" src="assets/img/logos/narramuros-logo.png" alt="Narra Muros" />
+    <img class="start-logo" src="assets/img/logos/narramuros-logo.webp" alt="Narra Muros" />
     <button class="start-btn" id="start-btn" type="button"><span>Toca para comenzar</span></button>
   </div>
 
@@ -67,27 +68,37 @@
           <div class="can-body" id="can-body">
             <span class="spray-cone" aria-hidden="true"></span>
             <span class="can-shine" aria-hidden="true"></span>
-            <img src="assets/img/logos/lata.png" alt="" />
+            <img src="assets/img/logos/lata.webp" alt="" />
           </div>
         </div>
 
         <div class="brand-lockup">
           <div class="logo-main" id="logo-main">
             <span class="logo-halo" aria-hidden="true"></span>
-            <img src="assets/img/logos/narramuros-logo.png" alt="Narra Muros — Arte urbano como herramienta de transformación social" />
+            <img src="assets/img/logos/narramuros-logo.webp" alt="Narra Muros — Arte urbano como herramienta de transformación social" />
           </div>
 
           <div class="drips" aria-hidden="true"></div>
 
+          <svg class="tag-swoosh" viewBox="0 0 300 40" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="swoosh-grad" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0" stop-color="#14e0c4" />
+                <stop offset="1" stop-color="#ff2e88" />
+              </linearGradient>
+            </defs>
+            <path pathLength="1" d="M8 28 C 60 6, 110 38, 160 20 S 255 6, 292 18" />
+          </svg>
+
           <div class="stickers">
             <div class="sticker sticker--disbo">
-              <img src="assets/img/logos/disbo-logo.png" alt="DISBo — Distrito de innovación social, Bogotá" />
+              <img src="assets/img/logos/disbo-logo.webp" alt="DISBo — Distrito de innovación social, Bogotá" />
             </div>
             <div class="sticker sticker--pcis">
-              <img src="assets/img/logos/PCIS.png" alt="PCIS — Parque Científico de Innovación Social" />
+              <img src="assets/img/logos/PCIS.webp" alt="PCIS — Parque Científico de Innovación Social" />
             </div>
             <div class="sticker sticker--raya">
-              <img src="assets/img/logos/raya-logo.png" alt="Raya" />
+              <img src="assets/img/logos/raya-logo.webp" alt="Raya" />
             </div>
           </div>
         </div>

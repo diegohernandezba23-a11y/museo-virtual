@@ -98,16 +98,50 @@
     return "";
   };
 
+  const arrowIcon = `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
+  const instagramIcon = `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".6" fill="currentColor"/></svg>`;
+
   const initShell = () => {
-    const holder = document.querySelector("[data-site-nav]");
-    if (!holder) return;
     const active = currentKey();
-    holder.innerHTML = nav
-      .map((item) => {
-        const isActive = item.key === active;
-        return `<a href="${item.href}"${isActive ? ' aria-current="page"' : ""}>${item.label}</a>`;
-      })
-      .join("");
+    const holder = document.querySelector("[data-site-nav]");
+    if (holder) {
+      holder.innerHTML =
+        nav
+          .map((item, i) => {
+            const isActive = item.key === active;
+            return `<a href="${item.href}" style="--i:${i}"${isActive ? ' aria-current="page"' : ""}><i aria-hidden="true">${String(i + 1).padStart(2, "0")}</i>${item.label}</a>`;
+          })
+          .join("") + `<p class="site-nav__foot">Arte urbano · Territorio vivo</p>`;
+    }
+
+    const footer = document.querySelector("[data-site-footer]");
+    if (footer) {
+      footer.innerHTML = `
+        <div class="footer__grid">
+          <div class="footer__brand">
+            <img src="assets/img/logos/narramuros-logo.webp" alt="Narra Muros" width="120" height="86" loading="lazy">
+            <p>Museo virtual de arte urbano, graffiti y creación colectiva. Engativá, Bogotá.</p>
+          </div>
+          <div>
+            <p class="footer__title">Recorrido</p>
+            <ul class="footer__links">${nav.map((item) => `<li><a href="${item.href}">${item.label}</a></li>`).join("")}</ul>
+          </div>
+          <div>
+            <p class="footer__title">Artistas</p>
+            <ul class="footer__links">${events
+              .filter((event) => event.artistInstagram)
+              .map((event) => `<li><a href="${event.artistInstagram.href}" target="_blank" rel="noopener noreferrer">${event.artistInstagram.handle}<span class="visually-hidden"> (Instagram, abre en otra pestaña)</span></a></li>`)
+              .join("")}</ul>
+          </div>
+        </div>
+        <div class="footer__bottom">
+          <span>Narra Muros · Museo Virtual</span>
+          <span>Escanea. Entra. Recorre.</span>
+          <button class="icon-button" type="button" data-to-top aria-label="Volver arriba">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+          </button>
+        </div>`;
+    }
   };
 
   window.MUSEO = {
@@ -123,6 +157,7 @@
       };
     },
     initShell,
+    icons: { arrow: arrowIcon, instagram: instagramIcon },
   };
 
   initShell();

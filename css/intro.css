@@ -904,6 +904,54 @@
   filter: contrast(1.08) saturate(1.05);
 }
 
+/* ---- Firma bajo el logo (la lata la traza) ---- */
+.tag-swoosh {
+  position: relative;
+  z-index: 3;
+  display: block;
+  width: 78%;
+  height: clamp(18px, 3vw, 34px);
+  margin: -3% 0 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.tag-swoosh path {
+  fill: none;
+  stroke: url(#swoosh-grad);
+  stroke-width: 9;
+  stroke-linecap: round;
+  /* pathLength="1": oculta hasta que la lata la traza */
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  filter: drop-shadow(0 0 8px #ff2e8899) drop-shadow(0 0 16px #14e0c455);
+}
+
+/* ---- "¡clac!": la lata se agita ---- */
+.clac {
+  position: absolute;
+  z-index: 7;
+  padding: 4px 12px 6px;
+  border-radius: 12px;
+  background: #f2ece0;
+  color: #07080a;
+  font-family: "Rubik Wet Paint", var(--font-display);
+  font-size: clamp(1.1rem, 3.4vw, 1.6rem);
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 4px 4px 0 #ff2e88, 0 10px 24px #000a;
+  pointer-events: none;
+}
+
+/* ---- Capa de tinta: la lata cubre la pantalla de negro al final ---- */
+.ink-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 3; /* sobre logo y stickers, bajo las partículas (4) y la lata (5) */
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 /* ---- Goterones ---- */
 .drip {
   position: absolute;
@@ -1053,7 +1101,8 @@
   }
   .sticker { opacity: 1; transform: none; }
   .start-logo, .start-btn { opacity: 1; animation: none; }
-  .spray-can, .drip, .spray-canvas, .paint-glow, .spray-cone { display: none; }
+  .spray-can, .drip, .spray-canvas, .paint-glow, .spray-cone, .clac, .ink-canvas { display: none; }
+  .tag-swoosh path { stroke-dasharray: none; stroke-dashoffset: 0; }
   .start-screen::before, .start-screen::after, .start-haze, .neon-light, .start-sparks, .urban-grid, .urban-splashes, .scene-atmosphere, .can-shine, .start-wall img, .start-tape, .start-drips, .start-tags, .start-brick { animation: none; }
   .start-btn::before, .start-btn span::after { animation: none; transform: translateX(0); }
 }

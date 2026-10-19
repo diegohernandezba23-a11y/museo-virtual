@@ -1,70 +1,54 @@
 (() => {
   if (!window.MUSEO) return;
+  const { icons } = MUSEO;
+  const encode = (src) => encodeURI(src);
+  const pad = (n) => String(n).padStart(2, "0");
 
+  /* ---- Cifras ---- */
   const stats = MUSEO.stats();
   const statsRoot = document.querySelector("[data-stats]");
   if (statsRoot) {
     statsRoot.innerHTML = [
-      { n: String(stats.eventos).padStart(2, "0"), l: "Eventos" },
-      { n: String(stats.obras).padStart(2, "0"), l: "Obras" },
-      { n: String(stats.voces).padStart(2, "0"), l: "Voces" },
+      { n: stats.eventos, l: "Eventos" },
+      { n: stats.obras, l: "Obras" },
+      { n: stats.voces, l: "Voces" },
     ]
-      .map(
-        (item) => `<article class="stat" data-reveal>
-          <strong>${item.n}</strong>
+      .map((item, i) => `<div class="stat" data-reveal style="--d:${i * 0.1}s">
+          <strong data-count="${item.n}">${pad(item.n)}</strong>
           <span>${item.l}</span>
-        </article>`
-      )
+        </div>`)
       .join("");
   }
 
+  /* ---- Salas (eventos) ---- */
+  const descriptions = {
+    "ecologia-integral": "Esta creación reúne las voces, aprendizajes y reflexiones surgidas durante el encuentro. Un mural que nos invita a comprender que el cuidado de la casa común comienza con nuestras acciones y decisiones cotidianas.",
+  };
   const eventsRoot = document.querySelector("[data-events]");
   if (eventsRoot) {
-    const instagramLinks = {
-      "narra-muros": {
-        href: "https://instagram.com/h_umo_996?obrf=OHhvNzVsenZhemM%3D",
-        handle: "@h_umo_996",
-      },
-      "ecologia-integral": {
-        href: "https://instagram.com/el_arte_de_zenko?srtk=MTBlc2tvMzYzd2UzbA%3D%3D",
-        handle: "@el_arte_de_zenko",
-      },
-    };
     eventsRoot.innerHTML = MUSEO.events
       .map((event, index) => {
-        const encode = (src) => encodeURI(src);
-        const isEcologiaIntegral = event.id === "ecologia-integral";
-        const instagram = instagramLinks[event.id];
-        const description = isEcologiaIntegral
-          ? "Esta creación reúne las voces, aprendizajes y reflexiones surgidas durante el encuentro. Un mural que nos invita a comprender que el cuidado de la casa común comienza con nuestras acciones y decisiones cotidianas."
-          : event.lead;
-        const layout =
-          event.id === "ecologia-integral"
-            ? "event-feature--panel"
-            : index % 2
-              ? "event-feature--split"
-              : "event-feature--panel";
+        const href = `evento.html?id=${event.id}`;
+        const chips = [
+          event.obrasCount ? `${event.obrasCount} obras` : "",
+          event.videos.length ? `${event.videos.length} ${event.videos.length === 1 ? "video" : "videos"}` : "",
+        ].filter(Boolean);
+        const ig = event.artistInstagram;
         return `
-        <article class="event-feature ${layout} event-feature--${event.id}" data-reveal>
-          <a class="event-feature__visual" href="evento.html?id=${event.id}">
-            <img src="${encode(event.cover)}" alt="${event.coverAlt}" loading="${index ? "lazy" : "eager"}">
-            <span class="event-feature__index">${String(index + 1).padStart(2, "0")}</span>
+        <article class="sala" aria-labelledby="sala-${event.id}">
+          <a class="sala__media" href="${href}" data-reveal="clip" data-cursor="Entrar" tabindex="-1" aria-hidden="true">
+            <img src="${encode(event.cover)}" alt="" loading="${index ? "lazy" : "eager"}" data-parallax>
+            <span class="sala__num">${pad(index + 1)}</span>
+            <span class="sala__badge">Entrar<br>a la sala</span>
           </a>
-          <div class="event-feature__copy">
-            <p class="eyebrow">${event.kicker}</p>
-            <h3>${event.name}</h3>
-            <p>${description}</p>
-            <p class="event-feature__meta">${event.place}${event.obrasCount ? ` · ${event.obrasCount} obras` : ""}${event.videos.length ? ` · ${event.videos.length} ${event.videos.length === 1 ? "video" : "videos"}` : ""}</p>
-            <div class="event-feature__actions">
-            ${instagram ? `<a class="button button--ghost instagram-link" href="${instagram.href}" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <rect x="3" y="3" width="18" height="18" rx="5"></rect>
-                <circle cx="12" cy="12" r="4"></circle>
-                <circle class="instagram-link__dot" cx="17.5" cy="6.5" r="1"></circle>
-              </svg>
-              <span>Instagram · ${instagram.handle}</span>
-            </a>` : ""}
-            <a class="button" href="evento.html?id=${event.id}">Entrar al evento</a>
+          <div class="sala__copy">
+            <p class="eyebrow" data-reveal>${event.kicker}</p>
+            <h3 id="sala-${event.id}" data-split>${event.name}</h3>
+            <p data-reveal style="--d:.1s">${descriptions[event.id] || event.lead}</p>
+            <ul class="chips" data-reveal style="--d:.18s" aria-label="Datos de la sala">${chips.map((c) => `<li>${c}</li>`).join("")}</ul>
+            <div class="sala__actions" data-reveal style="--d:.26s">
+              <a class="button" href="${href}" data-magnetic>Entrar al evento <span class="button__icon">${icons.arrow}</span></a>
+              ${ig ? `<a class="button button--ghost" href="${ig.href}" target="_blank" rel="noopener noreferrer">${icons.instagram} ${ig.handle}<span class="visually-hidden"> (Instagram, abre en otra pestaña)</span></a>` : ""}
             </div>
           </div>
         </article>`;
@@ -72,23 +56,23 @@
       .join("");
   }
 
-  const strip = document.querySelector("[data-obras-strip]");
-  if (strip) {
-    strip.innerHTML = MUSEO.obras
-      .slice(0, 8)
-      .map(
-        (obra, index) => `
-        <a class="film-card" href="museo.html" aria-label="${obra.alt}" data-gallery-card style="--gallery-index:${index}">
-          <img src="assets/img/Obras/Pintura-${obra.n}-thumb.webp" alt="${obra.alt}" loading="lazy">
-          <span class="film-card__index" aria-hidden="true">${String(obra.n).padStart(2, "0")}</span>
-          <span class="film-card__caption" aria-hidden="true">
-            <span>Narra Muros</span>
-            <strong>Obra ${String(obra.n).padStart(2, "0")}</strong>
-            <span class="film-card__action">Ver en la sala <i aria-hidden="true">↗</i></span>
-          </span>
-        </a>`
-      )
+  /* ---- Muro de obras: dos hileras infinitas ---- */
+  const wall = document.querySelector("[data-obras-wall]");
+  if (wall) {
+    const tile = (obra, clone) => `
+      <a class="wall__tile" href="museo.html?obra=${obra.n}" data-cursor="Ver"${clone ? ' tabindex="-1" aria-hidden="true"' : ` aria-label="Ver la obra ${pad(obra.n)} en la sala"`}>
+        <img src="assets/img/Obras/Pintura-${obra.n}-thumb.webp" alt="" loading="lazy" width="240" height="320">
+        <span>Obra ${pad(obra.n)}</span>
+      </a>`;
+    const half = Math.ceil(MUSEO.obras.length / 2);
+    const rows = [MUSEO.obras.slice(0, half), MUSEO.obras.slice(half)];
+    wall.innerHTML = rows
+      .map((row, r) => {
+        const items = row.map((o) => tile(o, false)).join("") + row.map((o) => tile(o, true)).join("");
+        return `<div class="wall__row ${r ? "wall__row--reverse" : ""}" style="--wall-dur:${r ? 70 : 58}s">
+          <div class="wall__track">${items}</div>
+        </div>`;
+      })
       .join("");
   }
-
 })();

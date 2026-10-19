@@ -6,34 +6,42 @@
   <meta name="theme-color" content="#07080a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="description" content="Museo virtual permanente de arte urbano, encuentros comunitarios y creación colectiva.">
-  <title>Museo Virtual</title>
+  <title>Narra Muros | Museo Virtual</title>
   <script>
     if (new URLSearchParams(window.location.search).get("from") !== "museum") {
       window.location.replace("./");
     }
+    (function () {
+      var flags = document.documentElement.classList;
+      try { if (sessionStorage.getItem("nm-curtain") === "1") { flags.add("is-entering"); sessionStorage.removeItem("nm-curtain"); } } catch (e) {}
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      flags.add("hero-intro");
+      try { if (sessionStorage.getItem("nm-intro") === "1") flags.add("hero-paint"); } catch (e) {}
+      setTimeout(function () { flags.remove("hero-intro", "hero-paint"); }, 5000);
+    })();
   </script>
+  <link rel="icon" type="image/png" href="assets/img/logos/favicon.png">
+  <link rel="preload" as="image" href="assets/img/evento/Fondo.webp" media="(min-width: 901px)">
+  <link rel="preload" as="image" href="assets/img/evento/Fondo_celular.webp" media="(max-width: 900px)">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Rubik+Wet+Paint&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/platform.css">
 </head>
 <body class="page-home">
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
   <div class="page-transition" aria-hidden="true"></div>
-  <div class="cursor" aria-hidden="true"></div>
-  <div class="cursor-dot" aria-hidden="true"></div>
-  <canvas class="fx-canvas" aria-hidden="true"></canvas>
 
   <header class="site-header">
-    <a class="brand" href="home.html?from=museum">
-      <img src="assets/img/logos/narramuros-logo.png" alt="">
+    <a class="brand" href="home.html?from=museum" aria-label="Narra Muros, Museo Virtual: inicio">
+      <img src="assets/img/logos/narramuros-mark.webp" alt="" width="46" height="33">
       Museo <span>Virtual</span>
     </a>
-    <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav" aria-label="Abrir menú">
-      <span></span><span></span>
+    <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav">
+      <span data-nav-label>Menú</span><span class="nav-toggle__bars" aria-hidden="true"></span>
     </button>
-    <nav id="site-nav" data-site-nav aria-label="Navegación principal"></nav>
+    <nav class="site-nav" id="site-nav" data-site-nav aria-label="Navegación principal"></nav>
   </header>
 
   <main id="contenido">
@@ -41,7 +49,7 @@
       <div class="hero__media">
         <picture>
           <source media="(max-width: 900px)" srcset="assets/img/evento/Fondo_celular.webp">
-          <img class="hero__photo" src="assets/img/evento/Fondo.webp" alt="Encuentro de arte urbano, danza y comunidad al atardecer">
+          <img class="hero__photo" src="assets/img/evento/Fondo.webp" alt="Encuentro de arte urbano, danza y comunidad al atardecer" fetchpriority="high">
         </picture>
       </div>
       <div class="hero__noise" aria-hidden="true"></div>
@@ -49,17 +57,17 @@
         <p class="hero__kicker"><i></i> Museo virtual · Memoria colectiva</p>
         <h1 id="home-title">
           <span class="line"><span>Un museo</span></span>
-          <span class="line"><span>que no cabe</span></span>
-          <span class="line"><span>entre cuatro paredes</span></span>
+          <span class="line"><span>que no cabe entre</span></span>
+          <span class="line line--accent"><span>cuatro paredes</span></span>
         </h1>
-        <p class="lead" data-reveal>Reúne eventos, murales, obras y voces de quienes pintan el territorio. Entra, recorre y sigue el rastro de cada encuentro.</p>
-        <div class="hero__actions" data-reveal>
-          <a class="button" href="#eventos">Explorar eventos</a>
-          <a class="button button--ghost" href="museo.html">Sala de obras</a>
+        <p class="lead">Reúne eventos, murales, obras y voces de quienes pintan el territorio. Entra, recorre y sigue el rastro de cada encuentro.</p>
+        <div class="hero__actions">
+          <a class="button" href="#eventos" data-magnetic>Explorar salas <span class="button__icon" data-icon="arrow"></span></a>
+          <a class="button button--ghost" href="museo.html" data-magnetic>Sala de obras</a>
         </div>
       </div>
       <p class="hero__meta">Arte urbano<br>Territorio vivo</p>
-      <div class="scroll-hint" aria-hidden="true"><span></span></div>
+      <div class="scroll-hint" aria-hidden="true">Desliza<span></span></div>
     </section>
 
     <div class="marquee" aria-hidden="true">
@@ -69,44 +77,58 @@
       </div>
     </div>
 
-    <section class="museum-stats" data-stats aria-label="Cifras del museo"></section>
-
-    <section class="section museum-about" id="museo" aria-labelledby="about-title">
-      <div data-reveal>
+    <section class="section manifesto" id="museo" aria-labelledby="about-title">
+      <div class="manifesto__head" data-reveal>
         <p class="eyebrow">Qué es este lugar</p>
         <h2 id="about-title">La memoria viva de nuestros encuentros</h2>
       </div>
-      <p class="lead" data-reveal>Este museo reúne las obras, historias y aprendizajes construidos colectivamente. Cada actividad suma nuevas voces, nuevos relatos y nuevas formas de comprender nuestro mundo.</p>
+      <p class="manifesto__text" data-scrub-text>Este museo reúne las obras, historias y aprendizajes construidos <em>colectivamente</em>. Cada actividad suma nuevas voces, nuevos relatos y nuevas formas de comprender <em>nuestro mundo.</em></p>
+      <div class="museum-stats" data-stats aria-label="Cifras del museo"></div>
     </section>
 
     <section class="section" id="eventos" aria-labelledby="events-title">
       <div class="section-heading">
         <div>
-          <p class="eyebrow">Salas del museo</p>
-          <h2 id="events-title">Eventos para recorrer</h2>
+          <p class="eyebrow" data-reveal>Salas del museo</p>
+          <h2 id="events-title" data-split>Eventos para recorrer</h2>
         </div>
+        <p class="lead" data-reveal style="--d:.15s">Cada sala guarda un encuentro: la obra que nació en él, la gente que lo hizo posible y sus voces.</p>
       </div>
-      <div data-events></div>
+      <div class="salas" data-events></div>
     </section>
 
-    <section class="section art-gallery" id="obras" aria-labelledby="obras-title">
+    <section class="section obras-wall" id="obras" aria-labelledby="obras-title">
       <div class="section-heading">
-        <div data-reveal>
-          <p class="eyebrow">Creaciones</p>
-          <h2 id="obras-title">Obras que salieron del encuentro</h2>
+        <div>
+          <p class="eyebrow" data-reveal>Creaciones · 18 obras</p>
+          <h2 id="obras-title" data-split>Obras que salieron del encuentro</h2>
         </div>
-        <a class="button button--ghost" href="museo.html">Abrir la sala</a>
+        <a class="button button--ghost" href="museo.html" data-reveal data-magnetic>Abrir la sala <span class="button__icon" data-icon="arrow"></span></a>
       </div>
-      <p class="lead" data-reveal style="margin-bottom: 28px">La experiencia interactiva de Narra Muros sigue intacta: un muro circular con las pinturas de quienes participaron.</p>
-      <div class="filmstrip" data-obras-strip></div>
+      <div class="wall" data-obras-wall></div>
+      <p class="wall__note">Toca una obra para verla en la sala, en su lugar del muro.</p>
     </section>
 
+    <section class="section finale" aria-labelledby="finale-title">
+      <p class="eyebrow" data-reveal>El muro sigue abierto</p>
+      <h2 id="finale-title" data-reveal>Entra a la sala y gira el muro del <span class="tag-font">arte</span></h2>
+      <p class="lead" data-reveal style="--d:.1s">Un anillo de pinturas hechas por jóvenes de Engativá. Arrastra, desliza y acércate a cada obra.</p>
+      <div class="finale__actions" data-reveal style="--d:.2s">
+        <a class="button" href="museo.html" data-magnetic>Entrar a la sala de obras <span class="button__icon" data-icon="arrow"></span></a>
+      </div>
+    </section>
+
+    <section class="partners" aria-labelledby="partners-title">
+      <p class="partners__label" id="partners-title">Con el apoyo de</p>
+      <ul class="partners__logos">
+        <li><img src="assets/img/logos/disbo-logo.webp" alt="DISBo — Distrito de innovación social, Bogotá" width="520" height="106" loading="lazy"></li>
+        <li><img src="assets/img/logos/PCIS.webp" alt="PCIS — Parque Científico de Innovación Social" width="520" height="168" loading="lazy"></li>
+        <li><img src="assets/img/logos/raya-logo.webp" alt="Raya" width="520" height="209" loading="lazy"></li>
+      </ul>
+    </section>
   </main>
 
-  <footer class="site-footer">
-    <span>Museo Virtual</span>
-    <span>Escanea. Entra. Recorre.</span>
-  </footer>
+  <footer class="site-footer" data-site-footer></footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
@@ -114,5 +136,6 @@
   <script src="js/museo-data.js"></script>
   <script src="js/home.js"></script>
   <script src="js/site.js"></script>
+  <script src="js/hero-reveal.js"></script>
 </body>
 </html>
