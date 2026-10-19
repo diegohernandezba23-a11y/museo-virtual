@@ -29,7 +29,7 @@ window.addEventListener('load', () => {
   const isMobile = window.innerWidth < 700 || coarse;
 
   const goHome = () => {
-    window.location.href = 'home.html';
+    window.location.href = 'home.html?from=museum';
   };
 
   if (!reduceMotion) {

@@ -7,6 +7,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="description" content="Museo virtual permanente de arte urbano, encuentros comunitarios y creación colectiva.">
   <title>Museo Virtual</title>
+  <script>
+    if (new URLSearchParams(window.location.search).get("from") !== "museum") {
+      window.location.replace("./");
+    }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
@@ -21,7 +26,7 @@
   <canvas class="fx-canvas" aria-hidden="true"></canvas>
 
   <header class="site-header">
-    <a class="brand" href="home.html">
+    <a class="brand" href="home.html?from=museum">
       <img src="assets/img/logos/narramuros-logo.png" alt="">
       Museo <span>Virtual</span>
     </a>

@@ -159,7 +159,7 @@
                 <p class="eyebrow">Continúa el recorrido</p>
                 <h2 id="more-title">Otros eventos del museo</h2>
               </div>
-              <a class="button button--ghost" href="home.html#eventos">Todos los eventos</a>
+              <a class="button button--ghost" href="home.html?from=museum#eventos">Todos los eventos</a>
             </div>
             <div class="more-events__grid">
               ${others

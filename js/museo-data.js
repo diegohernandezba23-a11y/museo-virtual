@@ -79,8 +79,8 @@
   });
 
   const nav = [
-    { href: "home.html", label: "Inicio", key: "home" },
-    { href: "home.html#eventos", label: "Eventos", key: "eventos" },
+    { href: "home.html?from=museum", label: "Inicio", key: "home" },
+    { href: "home.html?from=museum#eventos", label: "Eventos", key: "eventos" },
     ...events.map((event) => ({
       href: `evento.html?id=${event.id}`,
       label: event.name,
